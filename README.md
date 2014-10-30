@@ -3,6 +3,10 @@ brocade-vf-extension
 
 Manage VXLAN overlay-gateway functionality on Brocade VDX switches using REST API
 
+   * vfx.py: manage gw functions
+   * vfx_payload: helper functions to create xml payloads
+   * postman_vcs_vf_extension.json: google postman client rest call examples
+
 Example Usage:
 
 ```
