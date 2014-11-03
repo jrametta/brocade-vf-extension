@@ -35,12 +35,13 @@ class overlay_gw(object):
     """class to manage vxlan overlay gateways"""
     def __init__(self, name, hostname, username, password):
         self.gateway_name  = name
-        self.username = username
-        self.password = password
         self.ext_type = 'layer2-extension'
 
         self.config_url = "http://{}/rest/config/running".format(hostname)
-        self.headers = {'Accept': 'application/vnd.configuration.resource+xml'}
+
+        self.session = requests.Session()
+        self.session.auth = (username, password)
+        self.session.headers = {'Accept': 'application/vnd.configuration.resource+xml'}
 
     def vfextension_create(self, loopback, rbridge):
         """docstring for vfextensionn_create"""
@@ -52,9 +53,7 @@ class overlay_gw(object):
     def tunnel_create(self):
         """docstring for tunnel_create"""
         payload = PF.overlay_gateway(self.gateway_name)
-        req = requests.post(self.config_url, data=payload,
-                            headers=self.headers,
-                            auth=(self.username, self.password))
+        req = self.session.post(self.config_url, data=payload)
         self.check_response(req)
         return req
 
@@ -63,8 +62,7 @@ class overlay_gw(object):
         url = self.config_url + "/overlay-gateway/{}".format(self.gateway_name)
         logging.info("url: %s", url)
         payload = PF.overlay_gateway(self.gateway_name)
-        req = requests.delete(url, data=payload, headers=self.headers,
-                              auth=(self.username, self.password))
+        req = self.session.delete(url, data=payload)
         self.check_response(req)
         return req
 
@@ -82,8 +80,7 @@ class overlay_gw(object):
                 self.gateway_name)
         logging.info("url: %s", url)
         payload = PF.set_overlay_type(self.ext_type)
-        req = requests.put(url, data=payload, headers=self.headers,
-                           auth=(self.username, self.password))
+        req = self.session.put(url, data=payload)
         self.check_response(req)
         return req
 
@@ -94,8 +91,7 @@ class overlay_gw(object):
         url += "/ip/interface/Loopback"
         logging.info("url: %s", url)
         payload = PF.create_vtep(loopback)
-        req = requests.put(url, data=payload, headers=self.headers,
-                           auth=(self.username, self.password))
+        req = self.session.put(url, data=payload)
         self.check_response(req)
         return req
 
@@ -105,8 +101,7 @@ class overlay_gw(object):
                 self.gateway_name)
         logging.info("url: %s", url)
         payload = PF.attach_rbridge(rbridge)
-        req = requests.put(url, data=payload, headers=self.headers,
-                           auth=(self.username, self.password))
+        req = self.session.put(url, data=payload)
         self.check_response(req)
         return req
 
@@ -116,8 +111,7 @@ class overlay_gw(object):
                 self.gateway_name)
         logging.info("url: %s", url)
         payload = PF.vlan_to_vni_mapping(vlan, vni)
-        req = requests.post(url, data=payload, headers=self.headers,
-                           auth=(self.username, self.password))
+        req = self.session.post(url, data=payload)
         self.check_response(req)
         return req
 
@@ -126,8 +120,7 @@ class overlay_gw(object):
         url = self.config_url + "/overlay-gateway/{}".format(self.gateway_name)
         logging.info("url: %s", url)
         payload = PF.activate_gw()
-        req = requests.post(url, data=payload, headers=self.headers,
-                           auth=(self.username, self.password))
+        req = self.session.post(url, data=payload)
         self.check_response(req)
         return req
 
@@ -136,8 +129,7 @@ class overlay_gw(object):
         url = self.config_url + "/overlay-gateway/{}".format(self.gateway_name)
         logging.info("url: %s", url)
         payload = PF.define_remote_site(name)
-        req = requests.post(url, data=payload, headers=self.headers,
-                           auth=(self.username, self.password))
+        req = self.session.post(url, data=payload)
         self.check_response(req)
 
         logging.info("rsp code: %d: %s", req.status_code, req.reason)
@@ -145,8 +137,7 @@ class overlay_gw(object):
         url += "/site/{}".format(name)
         logging.info("url: %s", url)
         payload = PF.add_remote_ip(ipaddr)
-        req = requests.post(url, data=payload, headers=self.headers,
-                           auth=(self.username, self.password))
+        req = self.session.post(url, data=payload)
         self.check_response(req)
         return req
 
@@ -156,8 +147,7 @@ class overlay_gw(object):
         url += "/site/{}/extend".format(name)
         logging.info("url: %s", url)
         payload = PF.extend_vlan(vlan)
-        req = requests.put(url, data=payload, headers=self.headers,
-                           auth=(self.username, self.password))
+        req = self.session.put(url, data=payload)
         self.check_response(req)
         return req
 
@@ -168,8 +158,7 @@ class overlay_gw(object):
             url += self.gateway_name
 
         logging.info("url: %s", url)
-        req = requests.get(url, headers=self.headers,
-                           auth=(self.username, self.password))
+        req = self.session.get(url)
         self.check_response(req)
 
         #NOTE overlay gateway details are not complete
